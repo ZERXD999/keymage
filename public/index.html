@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b0920">
+<meta name="referrer" content="no-referrer">
+<title>KeyMage — ร่ายเวทด้วยการพิมพ์</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔮%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=JetBrains+Mono:wght@500;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<div id="conn" class="conn hidden" role="alert">ขาดการเชื่อมต่อกับเซิร์ฟเวอร์ กำลังเชื่อมต่อใหม่…</div>
+<div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+<button type="button" id="sound-btn" class="icon-btn" aria-label="เปิด/ปิดเสียง" title="เปิด/ปิดเสียง">🔊</button>
+
+<!-- 1. เข้าสู่ระบบ / สมัคร / ลืมรหัสผ่าน -->
+<main id="auth-screen" class="screen">
+    <h1 class="logo">KEYMAGE</h1>
+    <p class="tagline">ร่ายเวทด้วยการพิมพ์ ร่วมปราบมอนสเตอร์กับเพื่อน</p>
+
+    <section class="panel auth-card">
+        <div class="tabs" id="auth-tabs" role="tablist">
+            <button type="button" role="tab" id="tab-login" aria-selected="true">เข้าสู่ระบบ</button>
+            <button type="button" role="tab" id="tab-register" aria-selected="false">สมัครสมาชิก</button>
+        </div>
+
+        <form id="login-form" class="form" novalidate>
+            <div><label class="lbl" for="li-id">อีเมล หรือ ชื่อจอมเวท</label>
+                <input id="li-id" class="field" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+            <div><label class="lbl" for="li-pw">รหัสผ่าน</label>
+                <div class="field-wrap"><input id="li-pw" class="field" type="password" autocomplete="current-password" required>
+                <button type="button" class="eye" data-eye="li-pw" aria-label="แสดง/ซ่อนรหัสผ่าน">👁</button></div></div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">เข้าสู่เกม</button>
+            <div class="row-between"><span></span><button type="button" class="linkbtn" id="to-forgot">ลืมรหัสผ่าน?</button></div>
+        </form>
+
+        <form id="register-form" class="form hidden" novalidate>
+            <div><label class="lbl" for="rg-email">อีเมล (ใช้รับลิงก์เมื่อลืมรหัสผ่าน)</label>
+                <input id="rg-email" class="field" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" required></div>
+            <div><label class="lbl" for="rg-name">ชื่อจอมเวท (3–16 ตัวอักษร)</label>
+                <input id="rg-name" class="field" type="text" maxlength="16" autocomplete="nickname" required></div>
+            <div><label class="lbl" for="rg-pw">รหัสผ่าน (อย่างน้อย 8 ตัวอักษร)</label>
+                <div class="field-wrap"><input id="rg-pw" class="field" type="password" autocomplete="new-password" required>
+                <button type="button" class="eye" data-eye="rg-pw" aria-label="แสดง/ซ่อนรหัสผ่าน">👁</button></div>
+                <div class="pw-meter"><i id="rg-meter"></i></div></div>
+            <div><label class="lbl" for="rg-pw2">ยืนยันรหัสผ่าน</label>
+                <input id="rg-pw2" class="field" type="password" autocomplete="new-password" required></div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">สร้างบัญชีและเข้าเกม</button>
+        </form>
+
+        <form id="forgot-form" class="form hidden" novalidate>
+            <h2>ลืมรหัสผ่าน</h2>
+            <p class="hint">กรอกอีเมลที่ใช้สมัคร เราจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ให้ (ลิงก์ใช้ได้ 30 นาที)</p>
+            <div><label class="lbl" for="fg-email">อีเมล</label>
+                <input id="fg-email" class="field" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" required></div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">ส่งลิงก์รีเซ็ตรหัสผ่าน</button>
+            <button type="button" class="linkbtn" data-back>← กลับไปเข้าสู่ระบบ</button>
+        </form>
+
+        <form id="reset-form" class="form hidden" novalidate>
+            <h2>ตั้งรหัสผ่านใหม่</h2>
+            <div><label class="lbl" for="rs-pw">รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)</label>
+                <div class="field-wrap"><input id="rs-pw" class="field" type="password" autocomplete="new-password" required>
+                <button type="button" class="eye" data-eye="rs-pw" aria-label="แสดง/ซ่อนรหัสผ่าน">👁</button></div>
+                <div class="pw-meter"><i id="rs-meter"></i></div></div>
+            <div><label class="lbl" for="rs-pw2">ยืนยันรหัสผ่านใหม่</label>
+                <input id="rs-pw2" class="field" type="password" autocomplete="new-password" required></div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">บันทึกรหัสผ่านใหม่</button>
+            <button type="button" class="linkbtn" data-back>← กลับไปเข้าสู่ระบบ</button>
+        </form>
+
+        <div id="guest-box" class="guest-box">
+            <div class="or"><span>หรือ</span></div>
+            <button type="button" class="btn btn-block" id="guest-btn">🎮 ลองเล่นทันที — ไม่ต้องสมัครสมาชิก</button>
+            <p class="hint">เหมาะสำหรับเปิดดูเกมผ่านลิงก์ ระบบตั้งชื่อชั่วคราวให้เอง</p>
+        </div>
+        <p id="auth-msg" class="form-msg" role="alert"></p>
+    </section>
+    <p class="howto">พิมพ์คาถาบนการ์ดให้ถูกต้องเพื่อโจมตี เมื่อมอนสเตอร์ตอบโต้ สิ่งที่คุณพิมพ์ค้างไว้จะถูกล้างทิ้ง — เลือกภาษาและสลับแป้นพิมพ์ให้ตรงกับคาถา</p>
+</main>
+
+<!-- 2. ล็อบบี้ -->
+<main id="lobby-screen" class="screen hidden">
+    <div class="wrap">
+        <div class="topbar">
+            <div class="brand">KEYMAGE</div>
+            <div class="me-chip">
+                <div class="avatar" id="my-avatar">?</div>
+                <div><div class="nm" id="my-name"></div><div class="st">คะแนนสะสม <b id="my-total">0</b> · ชนะ <b id="my-wins">0</b> ครั้ง</div></div>
+                <button type="button" class="btn btn-quiet" id="logout-btn">ออกจากระบบ</button>
+            </div>
+        </div>
+
+        <div class="lobby-grid">
+            <section class="panel" aria-label="ตั้งค่าปาร์ตี้">
+                <div class="section">
+                    <h2 class="sec-title">ห้องปาร์ตี้</h2>
+                    <p class="hint">ให้เพื่อนกรอกรหัสเดียวกันเพื่อเข้าห้องเดียวกัน เว้นว่างไว้เพื่อลุยเดี่ยว</p>
+                    <input type="text" id="room-input" class="field" placeholder="เช่น ROOM1" aria-label="รหัสห้อง" maxlength="16" autocomplete="off">
+                </div>
+                <div class="section">
+                    <h2 class="sec-title">ภาษาคาถา</h2>
+                    <p class="hint">เลือกภาษาที่จะพิมพ์ หากเลือกไทยหรือผสม ให้สลับแป้นพิมพ์เป็นภาษาไทยก่อนเริ่มต่อสู้</p>
+                    <div class="language-grid" id="language-list" role="group" aria-label="เลือกภาษาคาถา">
+                        <button type="button" class="language-option" data-language="en" aria-pressed="true"><b>English</b><small>พิมพ์คาถาภาษาอังกฤษ</small></button>
+                        <button type="button" class="language-option" data-language="th" aria-pressed="false"><b>ไทย</b><small>พิมพ์คาถาภาษาไทย</small></button>
+                        <button type="button" class="language-option" data-language="mix" aria-pressed="false"><b>ผสม</b><small>สุ่มไทยและอังกฤษ</small></button>
+                    </div>
+                </div>
+                <div class="section">
+                    <h2 class="sec-title">สายอาชีพ</h2>
+                    <p class="hint">จัดกลุ่มตามความยากในการพิมพ์ ยิ่งยากยิ่งท้าทายมากขึ้น</p>
+                    <div id="class-list" class="class-groups" role="group" aria-label="เลือกสายอาชีพ">
+                        <section class="class-tier easy"><div class="tier-heading"><h3>เล่นง่าย <span>ง่าย</span></h3><p>คาถาสั้น คุ้นมือ เหมาะกับมือใหม่</p></div><div class="class-grid" id="class-easy"></div></section>
+                        <section class="class-tier medium"><div class="tier-heading"><h3>เล่นปานกลาง <span>ปานกลาง</span></h3><p>คำคาถายาวขึ้น ต้องจำการสะกดและจับจังหวะ</p></div><div class="class-grid" id="class-medium"></div></section>
+                        <section class="class-tier hard"><div class="tier-heading"><h3>เล่นยาก <span>ยาก</span></h3><p>คาถาซับซ้อนและท้าทาย เหมาะกับผู้เล่นที่ชำนาญ</p></div><div class="class-grid" id="class-hard"></div></section>
+                        <section class="class-tier special"><div class="tier-heading"><h3>หมวดพิเศษ <span>พิเศษ</span></h3></div><div class="class-grid" id="class-special"></div></section>
+                    </div>
+                    <div class="spell-preview" id="spell-preview" aria-live="polite"></div>
+                    <div class="legend">
+                        <span class="k-atk"><b>⚔ โจมตี</b> ดาเมจปกติ</span>
+                        <span class="k-ult"><b>💥 ไม้ตาย</b> ยาว แต่แรง ×1.5</span>
+                        <span class="k-def"><b>🛡 โล่</b> กันการโจมตีครั้งถัดไป</span>
+                        <span class="k-ctr"><b>↩ สวนกลับ</b> ตีกลับตอนโดนโจมตี</span>
+                    </div>
+                    <details class="combo-help" id="combo-help">
+                        <summary>🔥 ระบบคอมโบ — ตัวคูณคะแนน + หน่วงเวลาบอส</summary>
+                        <div id="combo-help-body"></div>
+                    </details>
+                </div>
+                <div class="section">
+                    <h2 class="sec-title">มอนสเตอร์เป้าหมาย</h2>
+                    <p class="hint">เลือกเป้าหมายตามระดับความท้าทาย · HP บอสเพิ่มตามจำนวนคนในปาร์ตี้ · ถ้าห้องมีคนสร้างไว้แล้ว จะใช้มอนสเตอร์ของห้องนั้น</p>
+                    <div class="monster-grid" id="monster-list" role="group" aria-label="เลือกมอนสเตอร์"></div>
+                </div>
+                <div class="join-row"><button type="button" class="btn btn-primary btn-lg btn-block" id="join-btn">เข้าห้องรอ</button></div>
+            </section>
+
+            <aside class="panel leaderboard" aria-label="ทำเนียบผู้กล้า">
+                <div class="head"><h2 class="sec-title">ทำเนียบผู้กล้า</h2><span class="hint" id="online-count"></span></div>
+                <input type="search" id="lb-search" class="field" placeholder="ค้นหาชื่อ" aria-label="ค้นหาชื่อผู้เล่น" autocomplete="off">
+                <ul class="lb" id="lb-list"></ul>
+            </aside>
+        </div>
+    </div>
+</main>
+
+<!-- 3. ห้องรอ -->
+<main id="waiting-screen" class="screen hidden">
+    <section class="panel wait-card">
+        <div class="wait-top">
+            <div><p class="hint">รหัสห้อง</p><div class="room-code" id="wait-room-id"></div></div>
+            <button type="button" class="btn" id="copy-btn">คัดลอก</button>
+        </div>
+        <div class="wait-monster">
+            <div class="em" id="wait-monster-em"></div>
+            <div><div class="nm" id="wait-monster-name"></div><div class="st" id="wait-monster-stat"></div></div>
+        </div>
+        <div id="wait-notice" class="notice hidden"></div>
+        <div class="roster-head"><h2 class="sec-title">สมาชิกปาร์ตี้</h2><span class="hint" id="wait-count"></span></div>
+        <ul class="roster" id="wait-players"></ul>
+        <div class="wait-actions">
+            <button type="button" class="btn btn-primary btn-lg" id="start-btn">เริ่มการต่อสู้</button>
+            <p class="hint" id="start-hint"></p>
+            <button type="button" class="btn btn-quiet" id="leave-btn">ออกจากห้อง</button>
+        </div>
+    </section>
+</main>
+
+<!-- 4. การต่อสู้ -->
+<main id="battle-screen" class="screen hidden">
+    <header class="hud-top">
+        <div class="me-hp">
+            <div class="lbl"><span>พลังชีวิตของคุณ</span><b id="my-hp-text">100</b></div>
+            <div class="bar" id="my-hp-bar"><i id="my-hp-fill"></i></div>
+            <div class="status-row" id="status-row"></div>
+        </div>
+        <div class="party" id="party"></div>
+        <div class="room-info">
+            <div>ห้อง <b id="current-room"></b></div>
+            <div>คะแนนรอบนี้ <span class="score" id="battle-score">0</span></div>
+        </div>
+    </header>
+
+    <section class="stage" id="stage">
+        <div id="fallen" class="fallen hidden">💀 คุณล้มแล้ว — เชียร์เพื่อนสู้ต่อ</div>
+        <h2 class="boss-name" id="monster-name"></h2>
+        <div class="sprite-wrap" id="sprite-wrap"><div class="sprite" id="monster-img"></div></div>
+        <div class="bar boss"><b id="monster-hp-ghost"></b><i id="monster-hp-fill"></i></div>
+        <div class="boss-hp-text" id="monster-hp-text"></div>
+        <div class="atk-timer" id="atk-timer"><span id="atk-label">การโจมตีครั้งถัดไป</span><div class="bar"><i id="atk-fill"></i></div><b class="atk-bonus" id="atk-bonus" aria-hidden="true"></b></div>
+        <div id="fx"></div>
+        <div class="vignette" id="vignette"></div>
+    </section>
+
+    <footer class="hud-bottom">
+        <div class="combo" id="combo" aria-live="off">
+            <div class="combo-count"><small>COMBO</small><b id="combo-n">0</b></div>
+            <div class="combo-info">
+                <div class="combo-mult">คะแนน <b id="combo-mult">×1.00</b> <small id="combo-cap"></small></div>
+                <div class="bar combo-bar"><i id="combo-fill"></i></div>
+                <div class="combo-note" id="combo-note">ร่ายคาถาต่อเนื่องโดยไม่โดนตี เพื่อสะสมคอมโบ</div>
+            </div>
+            <div class="combo-pop" id="combo-pop" aria-hidden="true"></div>
+        </div>
+        <div class="spells" id="active-skills" aria-live="off"></div>
+        <div class="kbd-hint" id="kbd-hint"></div>
+        <input type="text" id="spell-input" class="typing" placeholder="พิมพ์คาถาตรงนี้" aria-label="พิมพ์คาถา"
+               autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="40">
+    </footer>
+</main>
+
+<!-- ผลการต่อสู้ -->
+<div id="result" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="result-title">
+    <div class="panel dialog">
+        <div class="big-em" id="result-em"></div>
+        <h2 id="result-title"></h2>
+        <p class="sub" id="result-sub"></p>
+        <div class="results-head"><span></span><span>ผู้เล่น</span><span>ดาเมจ</span><span>คะแนนที่ได้</span></div>
+        <ol class="results" id="result-list"></ol>
+        <p class="total-gain" id="result-total"></p>
+        <button type="button" class="btn btn-primary btn-lg btn-block" id="result-btn">กลับสู่ล็อบบี้</button>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

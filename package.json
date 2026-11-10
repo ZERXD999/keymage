@@ -1,0 +1,26 @@
+{
+  "name": "keymage",
+  "version": "2.0.0",
+  "description": "KeyMage - MMO Typing: พิมพ์คาถาร่วมกันปราบมอนสเตอร์",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "balance": "node test/table.js",
+    "loadtest": "node test/loadtest.js",
+    "test": "node test/spells-check.js && node test/e2e.js",
+    "balance:combo": "node test/compare-combo.js",
+    "balance:nodamage": "node test/nodamage.js",
+    "balance:class": "node test/class-balance.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "nodemailer": "^6.9.14",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.7.5"
+  }
+}
